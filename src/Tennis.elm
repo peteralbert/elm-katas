@@ -104,19 +104,14 @@ checkDeuce game =
 checkGameEnd : Game -> Game
 checkGameEnd game =
     case game of
-        Ongoing WonOrDeuce player2Score ->
-            if player2Score /= WonOrDeuce then
-                WinPlayer1
+        Ongoing WonOrDeuce WonOrDeuce ->
+            Deuce
 
-            else
-                Deuce
+        Ongoing WonOrDeuce _ ->
+            WinPlayer1
 
-        Ongoing player1Score WonOrDeuce ->
-            if player1Score /= WonOrDeuce then
-                WinPlayer2
-
-            else
-                Deuce
+        Ongoing _ WonOrDeuce ->
+            WinPlayer2
 
         _ ->
             game
@@ -144,11 +139,11 @@ playerScoreToString score =
 scoreToString : Game -> String
 scoreToString game =
     case game of
-        WinPlayer1 ->
-            "Player 1 wins"
+        Ongoing player1Score player2Score ->
+            ongoingScoreToString player1Score player2Score
 
-        WinPlayer2 ->
-            "Player 2 wins"
+        Deuce ->
+            "Deuce"
 
         AdvantagePlayer1 ->
             "Advantage Player 1"
@@ -156,11 +151,11 @@ scoreToString game =
         AdvantagePlayer2 ->
             "Advantage Player 2"
 
-        Deuce ->
-            "Deuce"
+        WinPlayer1 ->
+            "Player 1 wins"
 
-        Ongoing player1Score player2Score ->
-            ongoingScoreToString player1Score player2Score
+        WinPlayer2 ->
+            "Player 2 wins"
 
 
 ongoingScoreToString : Score -> Score -> String
