@@ -3,8 +3,16 @@ module Tennis exposing (..)
 import Html exposing (a)
 
 
+type Score
+    = Love
+    | Fifteen
+    | Thirty
+    | Forty
+    | WonOrDeuce
+
+
 type Game
-    = Ongoing ( Int, Int )
+    = Ongoing Score Score
     | Deuce
     | AdvantagePlayer1
     | AdvantagePlayer2
@@ -14,14 +22,14 @@ type Game
 
 init : Game
 init =
-    Ongoing ( 0, 0 )
+    Ongoing Love Love
 
 
 player1Scores : Game -> Game
 player1Scores game =
     case game of
-        Ongoing ( first, second ) ->
-            Ongoing ( first + 1, second ) |> checkDeuce |> checkGameEnd
+        Ongoing first second ->
+            Ongoing (increaseScore first) second |> checkDeuce |> checkGameEnd
 
         Deuce ->
             AdvantagePlayer1
@@ -42,8 +50,8 @@ player1Scores game =
 player2Scores : Game -> Game
 player2Scores game =
     case game of
-        Ongoing ( first, second ) ->
-            Ongoing ( first, second + 1 ) |> checkDeuce |> checkGameEnd
+        Ongoing first second ->
+            Ongoing first (increaseScore second) |> checkDeuce |> checkGameEnd
 
         Deuce ->
             AdvantagePlayer2
@@ -61,10 +69,32 @@ player2Scores game =
             WinPlayer2
 
 
+increaseScore : Score -> Score
+increaseScore score =
+    case score of
+        Love ->
+            Fifteen
+
+        Fifteen ->
+            Thirty
+
+        Thirty ->
+            Forty
+
+        Forty ->
+            WonOrDeuce
+
+        WonOrDeuce ->
+            WonOrDeuce
+
+
 checkDeuce : Game -> Game
 checkDeuce game =
     case game of
-        Ongoing ( 3, 3 ) ->
+        Ongoing WonOrDeuce WonOrDeuce ->
+            Deuce
+
+        Ongoing Forty Forty ->
             Deuce
 
         _ ->
@@ -74,33 +104,37 @@ checkDeuce game =
 checkGameEnd : Game -> Game
 checkGameEnd game =
     case game of
-        Ongoing ( a, b ) ->
-            if a > 3 && a > b + 1 then
+        Ongoing WonOrDeuce player2Score ->
+            if player2Score /= WonOrDeuce then
                 WinPlayer1
 
-            else if b > 3 && b > a + 1 then
+            else
+                Deuce
+
+        Ongoing player1Score WonOrDeuce ->
+            if player1Score /= WonOrDeuce then
                 WinPlayer2
 
             else
-                Ongoing ( a, b )
+                Deuce
 
         _ ->
             game
 
 
-playerScoreToString : Int -> String
+playerScoreToString : Score -> String
 playerScoreToString score =
     case score of
-        0 ->
+        Love ->
             "Love"
 
-        1 ->
+        Fifteen ->
             "15"
 
-        2 ->
+        Thirty ->
             "30"
 
-        3 ->
+        Forty ->
             "40"
 
         _ ->
@@ -125,19 +159,19 @@ scoreToString game =
         Deuce ->
             "Deuce"
 
-        Ongoing ( a, b ) ->
-            let
-                player1 =
-                    playerScoreToString a
+        Ongoing player1Score player2Score ->
+            ongoingScoreToString player1Score player2Score
 
-                player2 =
-                    playerScoreToString b
-            in
-            if ( a, b ) == ( 0, 0 ) then
-                "Love-Love"
 
-            else if player1 == player2 then
-                player1 ++ "-All"
+ongoingScoreToString : Score -> Score -> String
+ongoingScoreToString player1Score player2Score =
+    if ( player1Score, player2Score ) == ( Love, Love ) then
+        "Love-Love"
 
-            else
-                player1 ++ "-" ++ player2
+    else if player1Score == player2Score then
+        playerScoreToString player1Score ++ "-All"
+
+    else
+        playerScoreToString player1Score
+            ++ "-"
+            ++ playerScoreToString player2Score
